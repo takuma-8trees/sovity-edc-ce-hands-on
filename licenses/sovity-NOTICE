@@ -1,0 +1,18 @@
+sovity EDC Connector and sovity EDC Connector UI
+Copyright 2024 sovity GmbH
+
+The following files and directories are explicitly Apache 2.0:
+  - connector/ce/libs/api
+  - connector/ce/libs/api-clients/java-client
+  - connector/ce/libs/api-clients/typescript-client
+  - connector/ce/libs/jsonld-lib
+  - connector/ce/libs/mappers-lib
+  - connector/ce/libs/runtime-os-lib
+
+This makes the following deliverables usable under Apache 2.0:
+  - Maven Package "de.sovity.edc:client"
+  - Maven Package "de.sovity.edc:mappers-lib"
+  - Maven Package "de.sovity.edc:jsonld-lib"
+  - NPM Package "@sovity.de/edc-client"
+
+All other deliverables unless otherwise noted are licensed under the Elastic License 2.0.

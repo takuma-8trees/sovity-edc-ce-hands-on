@@ -1,0 +1,170 @@
+# Adapted from sovity/edc-ce v16.8.1 local-demo-ce (Elastic License 2.0).
+# Modified: localhost ports, removed debug/DB ports, added sample data server.
+name: sovity-hands-on
+services:
+  consumer:
+    image: 'caddy:2.8@sha256:226d1f059b75399fe19182893c7184591c07b97afc8dfcf44eeb80c9a77a530f'
+    restart: 'unless-stopped'
+    ports:
+      - '127.0.0.1:22000:80'
+    volumes:
+      - './caddyfiles/Caddyfile.cp-with-integrated-dp:/etc/caddy/Caddyfile'
+    environment:
+      CONNECTOR_UPSTREAM_HOST: 'consumer-connector'
+      FRONTEND_UPSTREAM_HOST: 'consumer-ui'
+    networks:
+      consumer:
+        aliases:
+          - 'consumer'
+      provider:
+        aliases:
+          - 'consumer'
+  consumer-ui:
+    image: 'ghcr.io/sovity/edc-ce-ui:16.8.1@sha256:03aec9d12c05c8ac69ed7cd92e9964393103f46eb1bdfd9a09f99ec8f68e0602'
+    networks:
+      - 'consumer'
+    restart: 'unless-stopped'
+    environment:
+      NEXT_PUBLIC_MANAGEMENT_API_URL: '/api/management'
+      NEXT_PUBLIC_MANAGEMENT_API_KEY: 'SomeOtherApiKey'
+  consumer-connector:
+    image: 'ghcr.io/sovity/edc-ce:16.8.1@sha256:c8033df70a847ed4635c3a145e68642e2e8ce35f984d7c211b49472e04ff5a52'
+    networks:
+      consumer: {}
+    restart: 'unless-stopped'
+    depends_on:
+      consumer-connector-db:
+        condition: 'service_healthy'
+    environment:
+      sovity.deployment.kind: 'control-plane-with-integrated-data-plane'
+      sovity.edc.fqdn.public: 'consumer'
+      sovity.edc.fqdn.internal: 'localhost'
+      sovity.jdbc.url: 'jdbc:postgresql://consumer-connector-db:5432/db-name'
+      sovity.jdbc.user: 'db-user'
+      sovity.jdbc.password: 'db-pass'
+      sovity.management.api.iam.kind: 'management-iam-api-key'
+      edc.api.auth.key: 'SomeOtherApiKey'
+      sovity.edc.title: 'consumer Title'
+      sovity.edc.description: 'consumer Description'
+      sovity.edc.maintainer.name: 'consumer Maintainer'
+      sovity.edc.maintainer.url: 'https://consumer/maintainer'
+      sovity.edc.curator.name: 'consumer Curator'
+      sovity.edc.curator.url: 'https://consumer/curator'
+      sovity.edc.ui.preconfigured.counterparties: 'http://provider/api/v1/dsp?participantId=provider'
+      sovity.dataspace.kind: 'sovity-mock-iam'
+      edc.participant.id: 'consumer'
+      sovity.http.protocol: 'http://'
+      sovity.print.config: 'false'
+      sovity.logging.level: 'INFO'
+  consumer-connector-db:
+    image: 'docker.io/postgres:17-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0'
+    networks:
+      consumer: {}
+    restart: 'unless-stopped'
+    environment:
+      POSTGRES_USER: 'db-user'
+      POSTGRES_PASSWORD: 'db-pass'
+      POSTGRES_DB: 'db-name'
+    healthcheck:
+      test:
+        - 'CMD-SHELL'
+        - 'pg_isready -U db-user --dbname=db-name'
+      interval: '1s'
+      timeout: '5s'
+      retries: 10
+      start_period: '60s'
+    volumes:
+      - 'consumer-connector-db-data:/var/lib/postgresql/data'
+  provider:
+    image: 'caddy:2.8@sha256:226d1f059b75399fe19182893c7184591c07b97afc8dfcf44eeb80c9a77a530f'
+    restart: 'unless-stopped'
+    ports:
+      - '127.0.0.1:11000:80'
+    volumes:
+      - './caddyfiles/Caddyfile.cp-with-integrated-dp:/etc/caddy/Caddyfile'
+    environment:
+      CONNECTOR_UPSTREAM_HOST: 'provider-connector'
+      FRONTEND_UPSTREAM_HOST: 'provider-ui'
+    networks:
+      consumer:
+        aliases:
+          - 'provider'
+      provider:
+        aliases:
+          - 'provider'
+  provider-ui:
+    image: 'ghcr.io/sovity/edc-ce-ui:16.8.1@sha256:03aec9d12c05c8ac69ed7cd92e9964393103f46eb1bdfd9a09f99ec8f68e0602'
+    networks:
+      - 'provider'
+    restart: 'unless-stopped'
+    environment:
+      NEXT_PUBLIC_MANAGEMENT_API_URL: '/api/management'
+      NEXT_PUBLIC_MANAGEMENT_API_KEY: 'SomeOtherApiKey'
+  provider-connector:
+    image: 'ghcr.io/sovity/edc-ce:16.8.1@sha256:c8033df70a847ed4635c3a145e68642e2e8ce35f984d7c211b49472e04ff5a52'
+    networks:
+      provider: {}
+    restart: 'unless-stopped'
+    depends_on:
+      provider-connector-db:
+        condition: 'service_healthy'
+    environment:
+      sovity.deployment.kind: 'control-plane-with-integrated-data-plane'
+      sovity.edc.fqdn.public: 'provider'
+      sovity.edc.fqdn.internal: 'localhost'
+      sovity.jdbc.url: 'jdbc:postgresql://provider-connector-db:5432/db-name'
+      sovity.jdbc.user: 'db-user'
+      sovity.jdbc.password: 'db-pass'
+      sovity.management.api.iam.kind: 'management-iam-api-key'
+      edc.api.auth.key: 'SomeOtherApiKey'
+      sovity.edc.title: 'provider Title'
+      sovity.edc.description: 'provider Description'
+      sovity.edc.maintainer.name: 'provider Maintainer'
+      sovity.edc.maintainer.url: 'https://provider/maintainer'
+      sovity.edc.curator.name: 'provider Curator'
+      sovity.edc.curator.url: 'https://provider/curator'
+      sovity.edc.ui.preconfigured.counterparties: 'http://consumer/api/v1/dsp?participantId=consumer'
+      sovity.dataspace.kind: 'sovity-mock-iam'
+      edc.participant.id: 'provider'
+      sovity.http.protocol: 'http://'
+      sovity.print.config: 'false'
+      sovity.logging.level: 'INFO'
+  provider-connector-db:
+    image: 'docker.io/postgres:17-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0'
+    networks:
+      provider: {}
+    restart: 'unless-stopped'
+    environment:
+      POSTGRES_USER: 'db-user'
+      POSTGRES_PASSWORD: 'db-pass'
+      POSTGRES_DB: 'db-name'
+    healthcheck:
+      test:
+        - 'CMD-SHELL'
+        - 'pg_isready -U db-user --dbname=db-name'
+      interval: '1s'
+      timeout: '5s'
+      retries: 10
+      start_period: '60s'
+    volumes:
+      - 'provider-connector-db-data:/var/lib/postgresql/data'
+  data-server:
+    image: 'python:3.13-alpine@sha256:1e1f6334529d1fb26a2ef619d7cffb30a7c7d7cc1cc7338ebee283a58d1aeaca'
+    command: ['python', '/app/server.py']
+    volumes:
+      - './data-server:/app:ro'
+      - 'received-data:/received'
+    ports:
+      - '127.0.0.1:18080:8080'
+    networks:
+      - consumer
+      - provider
+volumes:
+  received-data:
+  consumer-connector-db-data:
+    driver: 'local'
+  provider-connector-db-data:
+    driver: 'local'
+networks:
+  consumer: {}
+  provider: {}
