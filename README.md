@@ -124,7 +124,7 @@ docker compose down -v
 
 ## 版・ライセンス・証拠
 
-CE/UIは16.8.1、PostgreSQLは17-alpine、Caddyは2.8、Pythonは3.13-alpineを参照します。検証時のdigestと実測結果は[evidence/verification.md](evidence/verification.md)。
+CE/UIは16.8.1、PostgreSQLは17-alpine、Caddyは2.8、Pythonは3.13-alpineを参照し、Composeではすべて検証時のdigestも固定しています。実測結果は[evidence/verification.md](evidence/verification.md)。
 
 構成は[sovity公式v16.8.1 local-demo-ce](https://github.com/sovity/edc-ce/tree/v16.8.1/docs/deployment-guide/goals/local-demo-ce)から変更しました。主な変更はホスト公開範囲、debug/DBポートの除去、ログレベル、データサーバー追加です。
 
