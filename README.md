@@ -2,7 +2,7 @@
 
 sovity EDC CE 16.8.1で、ProviderからConsumerへJSONを1件交換するローカルデモです。公開・カタログ取得・契約・転送はsovity UIで操作し、受信内容は同梱サーバーの画面で確認します。
 
-**検証状況:** Surface Laptop（Snapdragon ARM64）のWSL2 Ubuntu 24.04.3 LTSで、公開から転送完了・受信内容一致まで確認済み。GitHub新規cloneからの再現確認は準備中です。
+**検証状況:** Surface Laptop（Snapdragon ARM64）のWSL2 Ubuntu 24.04.3 LTSで、GitHub新規clone・空のDBから、公開→発見→契約→転送完了→受信内容一致まで確認済みです。
 
 ## 前提と起動
 
@@ -11,6 +11,7 @@ Docker EngineとDocker Compose v2が使える環境が必要です。読者の�
 ```bash
 git clone https://github.com/takuma-8trees/sovity-edc-ce-hands-on.git
 cd sovity-edc-ce-hands-on
+git checkout hands-on-16.8.1-v1
 docker compose up -d
 ```
 
@@ -53,6 +54,8 @@ Provider UIの **New Data Offer** を開きます。
 | Publishing Mode | Publish unrestricted |
 
 ParameterizationとAdvanced Fieldsはオフのまま、**Publish** を押します。`Data offer created successfully.` が表示されます。
+
+初回の入力直後、未登録のIDに`Asset ID is already taken`と表示される挙動を観測しました。少し待ち、**Data Offers**にまだ存在しないことを確認してから再度**Publish**すると成功しました。既存IDを重複作成しないでください。
 
 ここで入力するURLはコンテナからアクセスするためのものです。`localhost:18080`ではなく、Composeのサービス名`data-server`を使います。
 

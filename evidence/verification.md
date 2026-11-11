@@ -1,6 +1,6 @@
 # sovity EDC CE 検証記録
 
-検証日: 2026-11-11（Asia/Tokyo）。状態: 進行中。
+検証日: 2026-11-11（Asia/Tokyo）。状態: 実機・新規clone検証完了。
 
 ## 環境と版
 
@@ -37,7 +37,7 @@
 | 初回転送 | 失敗・修正済み | 受信側がContent-Lengthのみ対応していたため400、UIはTERMINATED。chunked対応を追加 |
 | 転送完了 | 成功 | 契約画面 → Transfer → REST-API Endpoint / POST / `http://data-server:8080/receive` / None → Initiate Transfer。転送ID `01a1cafa-17ff-7a89-9bb8-3615a7e74684` がCOMPLETED |
 | データ本体 | 成功 | `http://localhost:18080/`で72 bytes、Matches Provider sample: True、JSON本体を表示。SHA-256 `826443ea85951e69e05805554db90e3eb356b3f794bd0e2e9d3048241ef97836` |
-| 新規clone | 未実施 | 公開先`takuma-8trees/sovity-edc-ce-hands-on`をユーザーが作成。登録準備中 |
+| 新規clone | 成功 | 公開先から`d65255699c0a718aab7f757847b7a26b9a1cfea7`をclone。空のDBと受信volumeでUI操作を再実施し、COMPLETEDと72 bytesの本体一致を確認 |
 
 ## 設定の根拠
 
@@ -57,3 +57,19 @@
 - PostgreSQL 17-alpine: `sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0`。
 - Python 3.13-alpine: `sha256:1e1f6334529d1fb26a2ef619d7cffb30a7c7d7cc1cc7338ebee283a58d1aeaca`。
 - 5種すべてのローカルイメージのArchitectureがarm64であることも確認。
+
+## 新規cloneでの再現（2巡目）
+
+Windows Gitで公開リポジトリを`replay/sovity-edc-ce-hands-on`へ新規cloneし、WSL Dockerで起動。初回データを残すため初回コンテナを`down`で停止し、2巡目は`docker compose -p sovity-replay up -d`としてDB/受信volumeを分離した。Composeの内容は無変更。イメージキャッシュは使用しており、2巡目の再pullは行っていない。
+
+- 3個の新規volume作成を起動ログで確認。
+- 契約ID: `01a1cb00-5b52-7d2b-81f6-6c457ac8ee9c`。
+- 転送ID: `01a1cb00-964d-71ec-839a-e5bb32674de2`。
+- Transfer History: COMPLETED（1件、失敗なし）。
+- 受信側ログ（UTC）: 2026-11-11 14:26:17 `GET /sample.json` 200、`POST /receive` 200。
+- 受信画面: 72 bytes、Matches Provider sample: True、初回と同じJSON/SHA-256。
+- Windows clone後のsample.jsonも同じSHA-256。`.gitattributes`でLF固定。
+- 公開フォームのIDチェックが入力直後にalready takenと表示される挙動があった。未登録を確認し、間を置いてPublishを再実行すると成功。READMEに記載。
+- 公開タグ: `hands-on-16.8.1-v1`。2巡目後の変更はREADME・証拠のみで実行資材に変更なし。
+
+今回のために取得した5種のイメージはいずれも再現用構成で使用している。未使用の自作・中間イメージは生成していないため、一括prune等は行っていない。
