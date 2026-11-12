@@ -1,10 +1,9 @@
-"""Local hands-on source/sink; standard library only."""
+"""Local hands-on sink; standard library only."""
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import hashlib
 import html
 
-sample = Path('/app/sample.json')
 received = Path('/received/latest.bin')
 
 class Handler(BaseHTTPRequestHandler):
@@ -16,8 +15,6 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def do_GET(self):
-        if self.path == '/sample.json':
-            return self.respond(200, sample.read_bytes(), 'application/json')
         if self.path == '/received':
             if not received.exists():
                 return self.respond(404, b'No data received yet', 'text/plain')
@@ -25,12 +22,11 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != '/':
             return self.respond(404, b'Not found', 'text/plain')
         data = received.read_bytes() if received.exists() else None
-        body = '<!doctype html><meta charset="utf-8"><title>Consumer received data</title><h1>Consumer received data</h1>'
+        body = '<!doctype html><meta charset="utf-8"><style>body{font-family:system-ui;margin:32px;max-width:960px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#edf5fb;padding:20px}p{overflow-wrap:anywhere}</style><title>Consumer received data</title><h1>Consumer received data</h1><p>Compare this JSON and SHA-256 with the Provider page (http://localhost:18081/).</p>'
         if data is None:
             body += '<p>No data received yet. Reload after transfer.</p>'
         else:
             body += '<p>Received bytes: ' + str(len(data)) + '</p>'
-            body += '<p>Matches Provider sample: ' + str(data == sample.read_bytes()) + '</p>'
             body += '<p>SHA-256: ' + hashlib.sha256(data).hexdigest() + '</p>'
             body += '<pre>' + html.escape(data.decode('utf-8', errors='replace')) + '</pre>'
         self.respond(200, body.encode(), 'text/html; charset=utf-8')

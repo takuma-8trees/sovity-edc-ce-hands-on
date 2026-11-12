@@ -1,5 +1,5 @@
 # Adapted from sovity/edc-ce v16.8.1 local-demo-ce (Elastic License 2.0).
-# Modified: localhost ports, removed debug/DB ports, added sample data server.
+# Modified: localhost ports, removed debug/DB ports, split provider source and consumer sink data servers.
 name: sovity-hands-on
 services:
   consumer:
@@ -148,17 +148,27 @@ services:
       start_period: '60s'
     volumes:
       - 'provider-connector-db-data:/var/lib/postgresql/data'
-  data-server:
+  provider-data-server:
     image: 'python:3.13-alpine@sha256:1e1f6334529d1fb26a2ef619d7cffb30a7c7d7cc1cc7338ebee283a58d1aeaca'
     command: ['python', '/app/server.py']
     volumes:
-      - './data-server:/app:ro'
+      - './provider-data-server:/app:ro'
+    ports:
+      - '127.0.0.1:18081:8080'
+    networks:
+      - provider
+  consumer-data-server:
+    image: 'python:3.13-alpine@sha256:1e1f6334529d1fb26a2ef619d7cffb30a7c7d7cc1cc7338ebee283a58d1aeaca'
+    command: ['python', '/app/server.py']
+    volumes:
+      - './consumer-data-server:/app:ro'
       - 'received-data:/received'
     ports:
       - '127.0.0.1:18080:8080'
     networks:
       - consumer
       - provider
+
 volumes:
   received-data:
   consumer-connector-db-data:
